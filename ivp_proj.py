@@ -3,9 +3,6 @@ import cv2
 import mediapipe as mp
 import time
 import numpy as np
-import os
-
-
 
 class hand_detection():
     def __init__(self):
@@ -47,8 +44,7 @@ class hand_detection():
 
     def fingers_up(self, landmarks_list):
         fingers = []
-        finger_tips = [4, 8, 12, 16,
-                       20]  # finger tip landmarks from MediaPipe: https://google.github.io/mediapipe/solutions/hands.html
+        finger_tips = [4, 8, 12, 16, 20]  # finger tip landmarks from MediaPipe: https://google.github.io/mediapipe/solutions/hands.html
 
         if landmarks_list[finger_tips[0]][1] < landmarks_list[finger_tips[0] - 1][
             1]:  # Check if tip of thumb is right or left (horizontal)(considering right hand)
@@ -68,8 +64,6 @@ class hand_detection():
 
 def main():
     # Specify header menu to select color, eraser options
-    ##################change names###############################
-    ###############################uncomment this final##########################
     imPath = "/home/nishanth/IVP Assignments/Project/Images/UI.png"
     header = cv2.imread(imPath)
     drawColor = (0, 0, 255)
@@ -111,7 +105,7 @@ def main():
             # print(fingers)
 
             # Both fingers are up, therefore selection mode
-            if fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 0 and fingers[4] == 0:
+            if fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 0 and fingers[4] == 0:
                 x_prev, y_prev = 0, 0
                 print("Selection")
                 # Checking for the click
@@ -126,26 +120,24 @@ def main():
                         drawColor = (0, 0, 0)  # Eraser
                 cv2.rectangle(frame, (x1, y1 - 20), (x2, y2 + 20), drawColor, cv2.FILLED)  # rectangle for selection
 
-            # Three fingers up - Clears everything on screen
-            if fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 1 and fingers[4] == 0:
+            # Spiderman Hand - Clears everything on screen
+            if fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 1:
                 print("Clear All")
                 cv2.rectangle(frame, (0, 0), (640, 480), (0, 0, 0), cv2.FILLED)
                 cv2.rectangle(drawing_canvas, (0, 0), (640, 480), (0, 0, 0), cv2.FILLED)
 
             # Index finger is up, therefore drawing mode
-            if fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
+            if fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
                 print("Drawing")
                 cv2.circle(frame, (x1, y1), 15, drawColor, cv2.FILLED)
                 if x_prev == 0 and y_prev == 0:  # first frame of drawing (point is drawn at the same position)
                     x_prev, y_prev = x1, y1
 
                 if drawColor == (0, 0, 0):  # eraser is selected (fill with background color)
-                    cv2.line(frame, (x_prev, y_prev), (x1, y1), drawColor,
-                             eraser_thickness)  # draw line from x_prev, y_prev to current x1, y1
+                    cv2.line(frame, (x_prev, y_prev), (x1, y1), drawColor, eraser_thickness)  # draw line from x_prev, y_prev to current x1, y1
                     cv2.line(drawing_canvas, (x_prev, y_prev), (x1, y1), drawColor, eraser_thickness)
                 else:
-                    cv2.line(frame, (x_prev, y_prev), (x1, y1), drawColor,
-                             brush_thickness)  # draw line from x_prev, y_prev to current x1, y1
+                    cv2.line(frame, (x_prev, y_prev), (x1, y1), drawColor, brush_thickness)  # draw line from x_prev, y_prev to current x1, y1
                     cv2.line(drawing_canvas, (x_prev, y_prev), (x1, y1), drawColor, brush_thickness)
 
                 x_prev, y_prev = x1, y1
@@ -160,16 +152,19 @@ def main():
         prev_time = current_time
 
         # Text on video stream
-        cv2.putText(frame, str(fps), (10, 60), cv2.FONT_HERSHEY_PLAIN, 3, (47, 255, 173), 3)
+        cv2.putText(frame, str(fps), (10, 120), cv2.FONT_HERSHEY_PLAIN, 3, (47, 255, 173), 3)
 
         # Show drawing on main camera as well
-        # frame = cv2.addWeighted(frame, 1, drawing_canvas, 0.3, 0)
-        # frame = cv2.addWeighted(frame, 1, header, 0.5, 1)
+        frame = cv2.addWeighted(frame, 1, drawing_canvas, 0.8, 0)
+        frame[:55, :, :] = cv2.addWeighted(frame[:55, :, :], 0.2, header[:55, :, :], 1, 0)
 
         # Video stream
         cv2.imshow("Image", frame)
         cv2.imshow("Canvas", drawing_canvas)
         cv2.waitKey(1)
+
+        # print(frame.shape)
+        # print(drawing_canvas.shape)
 
 
 if __name__ == "__main__":
