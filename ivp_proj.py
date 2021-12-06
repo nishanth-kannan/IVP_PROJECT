@@ -16,7 +16,7 @@ class hand_detection():
         self.results = self.hands.process(frame)
 
         # Coordinates of the landmarks
-        # print(results.multi_hand_landmarks)
+        # print(self.results.multi_hand_landmarks)
 
         if self.results.multi_hand_landmarks:
             for landmarks in self.results.multi_hand_landmarks:
@@ -46,15 +46,13 @@ class hand_detection():
         fingers = []
         finger_tips = [4, 8, 12, 16, 20]  # finger tip landmarks from MediaPipe: https://google.github.io/mediapipe/solutions/hands.html
 
-        if landmarks_list[finger_tips[0]][1] < landmarks_list[finger_tips[0] - 1][
-            1]:  # Check if tip of thumb is right or left (horizontal)(considering right hand)
+        if landmarks_list[finger_tips[0]][1] < landmarks_list[finger_tips[0] - 1][1]:  # Check if tip of thumb is right or left (horizontal)(considering right hand)
             fingers.append(1)
         else:
             fingers.append(0)
 
         for i in range(1, 5):
-            if landmarks_list[finger_tips[i]][2] < landmarks_list[finger_tips[i] - 2][
-                2]:  # Check if finger tip is up or down (vertical)
+            if landmarks_list[finger_tips[i]][2] < landmarks_list[finger_tips[i] - 2][2]:  # Check if finger tip is up or down (vertical)
                 fingers.append(1)
             else:
                 fingers.append(0)
@@ -64,15 +62,17 @@ class hand_detection():
 
 def main():
     # Specify header menu to select color, eraser options
-    imPath = "/home/nishanth/IVP Assignments/Project/Images/UI.png"
+    imPath = "./Images/UI.png"
     header = cv2.imread(imPath)
-    drawColor = (0, 0, 255)
+    drawColor = (0, 0, 255) # default color is red
 
     # To calculate fps of the video stream
     prev_time, current_time = 0, 0
 
     # Opening Camera
     cap = cv2.VideoCapture(0)
+
+    width_of_cam, height_of_cam = 640, 480
 
     hand_detector = hand_detection()
 
@@ -81,7 +81,7 @@ def main():
     brush_thickness = 25
     eraser_thickness = 50
 
-    drawing_canvas = np.zeros(shape=(480, 640, 3), dtype=np.uint8)
+    drawing_canvas = np.zeros(shape=(height_of_cam, width_of_cam, 3), dtype=np.uint8)
 
     while True:
         success, frame = cap.read()
@@ -104,29 +104,29 @@ def main():
             fingers = hand_detector.fingers_up(landmarks_list)
             # print(fingers)
 
-            # Both fingers are up, therefore selection mode
+            # Index and Middle Finger up - Selection mode
             if fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 1 and fingers[3] == 0 and fingers[4] == 0:
                 x_prev, y_prev = 0, 0
                 print("Selection")
                 # Checking for the click
                 if y1 < 60:
-                    if 0 < x1 < 160:
-                        drawColor = (0, 0, 255)
-                    elif 160 < x1 < 320:
-                        drawColor = (255, 0, 0)
-                    elif 320 < x1 < 480:
-                        drawColor = (0, 255, 0)  #
-                    elif 480 < x1 < 640:
+                    if 0 < x1 < width_of_cam/4:
+                        drawColor = (0, 0, 255) # Red
+                    elif width_of_cam/4 < x1 < width_of_cam/2:
+                        drawColor = (255, 0, 0) # Blue
+                    elif width_of_cam/2 < x1 < 3*width_of_cam/4:
+                        drawColor = (0, 255, 0)  # Green
+                    elif 3*width_of_cam/4 < x1 < width_of_cam:
                         drawColor = (0, 0, 0)  # Eraser
                 cv2.rectangle(frame, (x1, y1 - 20), (x2, y2 + 20), drawColor, cv2.FILLED)  # rectangle for selection
 
-            # Spiderman Hand - Clears everything on screen
+            # Index and Pinky Finger up - Clears everything on screen
             if fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 1:
                 print("Clear All")
-                cv2.rectangle(frame, (0, 0), (640, 480), (0, 0, 0), cv2.FILLED)
-                cv2.rectangle(drawing_canvas, (0, 0), (640, 480), (0, 0, 0), cv2.FILLED)
+                # cv2.rectangle(frame, (0, 0), (width_of_cam, height_of_cam), (0, 0, 0), cv2.FILLED)
+                cv2.rectangle(drawing_canvas, (0, 0), (width_of_cam, height_of_cam), (0, 0, 0), cv2.FILLED)
 
-            # Index finger is up, therefore drawing mode
+            # Index finger up - Drawing mode
             if fingers[0] == 0 and fingers[1] == 1 and fingers[2] == 0 and fingers[3] == 0 and fingers[4] == 0:
                 print("Drawing")
                 cv2.circle(frame, (x1, y1), 15, drawColor, cv2.FILLED)
@@ -152,10 +152,10 @@ def main():
         prev_time = current_time
 
         # Text on video stream
-        cv2.putText(frame, str(fps), (10, 120), cv2.FONT_HERSHEY_PLAIN, 3, (47, 255, 173), 3)
+        cv2.putText(frame, str(fps), (10, 100), cv2.FONT_HERSHEY_PLAIN, 3, (47, 255, 173), 3)
 
-        # Show drawing on main camera as well
-        frame = cv2.addWeighted(frame, 1, drawing_canvas, 0.8, 0)
+        # Adding the overlays to the video feed
+        frame = cv2.addWeighted(frame, 1, drawing_canvas, 1, 0)
         frame[:55, :, :] = cv2.addWeighted(frame[:55, :, :], 0.2, header[:55, :, :], 1, 0)
 
         # Video stream
