@@ -4,6 +4,8 @@ import mediapipe as mp
 import time
 import numpy as np
 
+# ---------- Nishanth Kannan and Charan Pamuru ----------
+
 class hand_detection():
     def __init__(self):
         # Loading the Mediapipe Hands Module and storing them in variables
@@ -60,6 +62,8 @@ class hand_detection():
         return fingers
 
 
+# ---------- Pranav Kumar and Mylavarapu Akhil ----------
+    
 def main():
     # Specify header menu to select color, eraser options
     imPath = "./Images/UI.png"
